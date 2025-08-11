@@ -204,7 +204,9 @@ export function Toolbar(props: {
 
   const download = async () => {
     if (!canvasRef.current) return;
-    setState({ ...state, generating: true });
+    const initFontSize = state.fontSize;
+    setState({ ...state, generating: true, fontSize: 12 });
+    setState({ ...state, fontSize: initFontSize });
     const dataURL = await new Promise<string>((resolve) => {
       setTimeout(async () => {
         if (device.os === "ios" || device.browser === "safari") {
