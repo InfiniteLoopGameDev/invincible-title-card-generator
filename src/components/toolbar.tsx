@@ -289,7 +289,7 @@ export function Toolbar(props: {
         />
         <Slider
           label="Subtitle Offset"
-          min={0}
+          min={-20}
           max={20}
           value={state.subtitleOffset}
           onChange={(value) => setState({ ...state, subtitleOffset: value })}
