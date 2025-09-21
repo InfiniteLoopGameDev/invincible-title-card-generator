@@ -5,6 +5,8 @@ import ColorInput from "./colorinput";
 import ImageInput from "./uploadimage";
 import html2canvas from "html2canvas-pro";
 import AdBanner from "./adbanner";
+import domtoimage from "dom-to-image";
+import useDeviceInfo from "../utils";
 
 const backgroundPresets = [
   {
@@ -198,20 +200,31 @@ export function Toolbar(props: {
   canvasRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { state, setState, canvasRef } = props;
+  const device = useDeviceInfo();
 
   const download = async () => {
     if (!canvasRef.current) return;
-    setState({ ...state, generating: true });
+    const initFontSize = state.fontSize;
+    setState({ ...state, generating: true, fontSize: 12 });
+    setState({ ...state, fontSize: initFontSize });
     const dataURL = await new Promise<string>((resolve) => {
       setTimeout(async () => {
-        const canvas = await html2canvas(canvasRef.current!, {
-          allowTaint: true,
-          useCORS: true,
-          height: canvasRef.current!.clientHeight,
-          width: canvasRef.current!.clientWidth,
-          scale: 1,
-        });
-        resolve(canvas.toDataURL("image/png"));
+        if (device.os === "ios" || device.browser === "safari") {
+          const canvas = await html2canvas(canvasRef.current!, {
+            allowTaint: true,
+            useCORS: true,
+            height: canvasRef.current!.clientHeight,
+            width: canvasRef.current!.clientWidth,
+            scale: 1,
+          });
+          resolve(canvas.toDataURL("image/png"));
+        } else {
+          const canvas = await domtoimage.toPng(canvasRef.current!, {
+            height: canvasRef.current!.clientHeight,
+            width: canvasRef.current!.clientWidth,
+          });
+          resolve(canvas);
+        }
       }, 500);
     });
 
@@ -225,7 +238,7 @@ export function Toolbar(props: {
   };
 
   return (
-    <div className="md:w-1/3 w-full md:max-h-[calc(100vh-150px)] md:overflow-auto">
+    <div className="md:w-1/3 w-full max-h-[calc(100vh-400px)] md:max-h-[calc(100vh-150px)] overflow-auto">
       <div className="md:pl-4">
         <AdBanner
           data-ad-format="auto"
@@ -264,7 +277,7 @@ export function Toolbar(props: {
         <br />
         <Slider
           label="Font Size"
-          min={10}
+          min={5}
           max={40}
           value={state.fontSize}
           onChange={(value) => setState({ ...state, fontSize: value })}
@@ -275,6 +288,13 @@ export function Toolbar(props: {
           max={10}
           value={state.outline}
           onChange={(value) => setState({ ...state, outline: value })}
+        />
+        <Slider
+          label="Subtitle Offset"
+          min={-20}
+          max={20}
+          value={state.subtitleOffset}
+          onChange={(value) => setState({ ...state, subtitleOffset: value })}
         />
         <br />
         <div className="mt-4 mb-1">Presets</div>
